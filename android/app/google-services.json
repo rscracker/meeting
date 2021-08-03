@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "743762350128",
+    "project_id": "mscheduler-c7919",
+    "storage_bucket": "mscheduler-c7919.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:743762350128:android:86a734dadbc69f0dd89df5",
+        "android_client_info": {
+          "package_name": "it.softwarehouse.mscheduler"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "743762350128-5j2j2gr27frosd21pna9rcfdvnptl2nu.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBRzy9W29HNJ6apUUEEcFnbAqnyUtrdDdA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "743762350128-5j2j2gr27frosd21pna9rcfdvnptl2nu.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
