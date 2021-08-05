@@ -4,9 +4,10 @@ import 'Login.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import '../model/user.dart';
 import '../model/schedule.dart';
+import 'freindslist.dart';
+import 'addschedule.dart';
 
 class Home extends StatefulWidget {
   var uid;
@@ -18,6 +19,13 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   final FirebaseFirestore db = FirebaseFirestore.instance;
   var userdata;
+
+  var nickname;
+  var name;
+  var friendsList;
+  var friendsRequest;
+  var scheduleList;
+
   @override
   void initState(){
     getUsers().then((data) {
@@ -30,8 +38,7 @@ class _HomeState extends State<Home> {
 
   getUsers() async{
     var temp;
-    var result = await db.collection('Users').doc(widget.uid).get().then((DocumentSnapshot doc) {
-      print(doc.data());
+    var result = await db.collection('Users').doc(widget.uid).get().then((doc) {
       temp = doc.data();
     });
     return temp;
@@ -45,7 +52,12 @@ class _HomeState extends State<Home> {
         style: GoogleFonts.pacifico(),
         ),
         actions: [
-          IconButton(onPressed: () {}, icon: Icon(Icons.add)),
+          IconButton(onPressed: () {
+            Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => AddSchedule(uid : widget.uid))
+            );
+          },
+              icon: Icon(Icons.add)),
         ],
       ),
       body: Column(
@@ -94,7 +106,7 @@ class _HomeState extends State<Home> {
                     SizedBox(
                       height: 15,
                     ),
-                    Text('3')
+                    Text(userdata['scheduleList'].length.toString())
                   ],
                 ),
               ),
@@ -102,19 +114,26 @@ class _HomeState extends State<Home> {
         ),
         Expanded(
             flex: 1,
-            child: Container(
-              color: Colors.blue,
-              height: 100,
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  children: <Widget>[
-                    Text("Friends"),
-                    SizedBox(
-                      height: 15,
-                    ),
-                    Text('10')
-                  ],
+            child: GestureDetector(
+              onTap: () {
+                Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => FriendsList(uid : widget.uid))
+                );
+              },
+              child: Container(
+                color: Colors.blue,
+                height: 100,
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    children: <Widget>[
+                      Text("Friends"),
+                      SizedBox(
+                        height: 15,
+                      ),
+                      Text(userdata['friendsList'].length.toString())
+                    ],
+                  ),
                 ),
               ),
             )
@@ -171,9 +190,5 @@ class _HomeState extends State<Home> {
       ),
     );
   }
-  void abc(){
-    setState(() {
 
-    });
-  }
 }

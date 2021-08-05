@@ -144,7 +144,7 @@ class _CreateAccountState extends State<CreateAccount> {
     FirebaseFirestore db = FirebaseFirestore.instance;
     try {
       _userId = await auth.signUp(emailController.text, passwordController.text);
-      Users user = Users(null,_userId, nickController.text, nameController.text, null, null, null);
+      Users user = Users(null,_userId, nickController.text, nameController.text, [], [], []);
       var result  = db.collection('Users').doc('$_userId').set(user.toMap());
       Navigator.pop(context);
       return result;
