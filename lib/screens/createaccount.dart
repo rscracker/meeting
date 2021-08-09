@@ -155,7 +155,7 @@ class _CreateAccountState extends State<CreateAccount> {
     }
   }
 
-  void check() {
+  check() {
     if (nameController.text != "" && nickController.text != ""  && emailController.text != ""  && passwordController.text != ""  ) {
       setState(() {
         _enabled = true;

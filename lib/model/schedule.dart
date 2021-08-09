@@ -6,8 +6,9 @@ class Schedule {
   var _date;
   var _time;
   var _share;
+  var _uploader;
 
-  Schedule(this._title, this._description, this._date, this._time, this._share);
+  Schedule(this._title, this._description, this._date, this._time, this._share, this._uploader);
 
   String get description => _description;
   String get title => _title;

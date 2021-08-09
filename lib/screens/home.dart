@@ -19,7 +19,6 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   final FirebaseFirestore db = FirebaseFirestore.instance;
   var userdata;
-
   var nickname;
   var name;
   var friendsList;
@@ -31,6 +30,7 @@ class _HomeState extends State<Home> {
     getUsers().then((data) {
       setState(() {
         userdata = data;
+        scheduleList = userdata['scheduleList'];
       });
     });
     super.initState();
@@ -146,30 +146,42 @@ class _HomeState extends State<Home> {
     return Expanded(
       child: Container(
         color: Theme.of(context).primaryColor,
-        child: ListView(
-          children: <Widget>[
-            Card(
+        child: ListView.builder(
+          itemCount: scheduleList.length,
+          itemBuilder: (BuildContext context, int index){
+            return Card(
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(3.0)),
               child: ListTile(
+                trailing: Row(
+                  children: <Widget>[
+                    IconButton(
+                        onPressed: (){},
+                        icon: Icon(Icons.add)),
+                    IconButton(
+                      onPressed: (){},
+                      icon: Icon(Icons.delete),
+                    ),
+                  ],
+                ),
                 title: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      "Title",
+                      scheduleList[index]['title'],
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     Text(
-                      "Description",
+                      scheduleList[index]['description'],
                       style: TextStyle(
                         fontSize: 16,
                       ),
                     ),
                     Text(
-                      "2021/07/24 15:30",
+                      "${scheduleList[index]['date']} ${scheduleList[index]['time']}",
                       style: TextStyle(
                         fontSize: 16,
                       ),
@@ -184,8 +196,8 @@ class _HomeState extends State<Home> {
                   ],
                 ),
               ),
-            ),
-          ],
+            );
+          },
         ),
       ),
     );
