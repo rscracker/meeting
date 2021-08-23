@@ -393,13 +393,16 @@ class _HomeState extends State<Home> {
                   (_totalScheduleList[index]['participation'].length.toString()
                       ==_totalScheduleList[index]['limit'].toString()
                     && _totalScheduleList[index]['limit'].toString() != "0"
-                      && !_totalScheduleList[index]['participation'].contains(widget.uid)
                   ) ?
                   ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         primary: Colors.white,
                       ),
-                      onPressed: (){},
+                      onPressed: (){
+                        _totalScheduleList[index]['participation'].contains(widget.uid) ?
+                            cancelParticipation(_totalScheduleList[index]['uploader'], _totalScheduleList[index]['docNum'])
+                            : null;
+                      },
                       child: Text('마감',
                         style: GoogleFonts.nanumGothic(
                           fontWeight: FontWeight.bold,
