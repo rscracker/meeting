@@ -274,6 +274,10 @@ class _CreateAccountState extends State<CreateAccount> {
         setState(() {
           message = '이메일 형식이 잘못 되었습니다.';
         });
+      } else if(e.toString().contains('already in use')){
+        setState(() {
+          message = '이미 존재하는 이메일 입니다.';
+        });
       }
     }
   }

@@ -14,6 +14,7 @@ class FriendsList extends StatefulWidget {
 
 class _FriendsListState extends State<FriendsList> {
   bool isSearch = false;
+  bool isFriends = false;
   var searchedUser;
   var searchController = TextEditingController();
   final FirebaseFirestore db = FirebaseFirestore.instance;
@@ -43,13 +44,25 @@ class _FriendsListState extends State<FriendsList> {
   }
   searchUser() async{
     var temp;
+    await db.collection('Users').doc(widget.uid).get().then((doc) {
+      temp = doc.data();
+      setState(() {
+        friendsList = temp['friendsList'];
+      });
+    });
     setState(() {
       isSearch = !isSearch;
     });
+    print(friendsList);
     await db.collection('Users').get().then((QuerySnapshot snapshot) {
       snapshot.docs.forEach((DocumentSnapshot doc) {
         temp = doc.data();
         if(temp['nickname'] == searchController.text) {
+          if(friendsList.contains(temp['userid'])){
+            setState(() {
+              isFriends = true;
+            });
+          }
           setState(() {
             searchedUser = temp;
           });
@@ -106,6 +119,7 @@ class _FriendsListState extends State<FriendsList> {
                           context: context,
                           builder: (BuildContext context) {
                             return AlertDialog(
+                                backgroundColor: Colors.lightBlue[100],
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10.0)
                               ),
@@ -115,26 +129,38 @@ class _FriendsListState extends State<FriendsList> {
                                 children: <Widget>[
                                   Padding(
                                     padding: const EdgeInsets.all(8.0),
-                                    child: ElevatedButton(onPressed: () async{
+                                    child: !isFriends ? ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        primary: Colors.teal[100],
+                                      ),
+                                      onPressed: () async{
                                       await requestFriends(searchedUser['userid']);
                                       setState(() {
                                         searchedUser = null;
                                         searchController.text = "";
+                                        isFriends = false;
                                       });
                                       Navigator.pop(context);
                                     },
                                       child: Text("친구 요청"),
-                                    ),
+                                    ) : Text("이미 친구입니다"),
                                   ),
                                   Padding(
                                     padding: const EdgeInsets.all(8.0),
-                                    child: ElevatedButton(onPressed: (){
+                                    child: ElevatedButton(
+                                        style : ElevatedButton.styleFrom(
+                                          primary: Colors.teal[100]
+                                        ),
+                                        onPressed: (){
                                       Navigator.pop(context);
                                       setState(() {
                                         searchedUser = null;
+                                        isFriends = false;
                                       });
                                     },
-                                        child: Text("취소")),
+                                        child: isFriends? Text("확인") : Text("취소")
+
+                                    ),
                                   ),
                                 ],
                               )
