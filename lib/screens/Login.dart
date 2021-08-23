@@ -77,28 +77,54 @@ class _LoginState extends State<Login> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text("$_message"),
+              padding: const EdgeInsets.only(left: 16.0, top : 8.0, bottom : 8.0),
+              child: Container(
+                alignment: Alignment.centerLeft,
+                child: Text("$_message",
+                  style: GoogleFonts.nanumGothic(
+                    color: Colors.red,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: ElevatedButton(onPressed: _enabled ? submit : null,
-                      child: Text("로그인"),
-
-
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                    primary: Colors.blue[100],
+                  ),onPressed: _enabled ? submit : null,
+                      child: Text("로그인",
+                        style: GoogleFonts.nanumGothic(
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                   ),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: ElevatedButton(onPressed: (){
+                  child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        primary: Colors.blue[100],
+                      ),
+                      onPressed: (){
                     Navigator.of(context).push(
                         MaterialPageRoute(builder: (context) => CreateAccount())
                     );
+                    setState(() {
+                      _message = '';
+                    });
                   },
-                      child: Text("회원가입")),
+                      child: Text("회원가입",
+                        style: GoogleFonts.nanumGothic(
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      )),
                 ),
               ],
             )
@@ -124,12 +150,25 @@ class _LoginState extends State<Login> {
         Navigator.of(context).push(
           MaterialPageRoute(builder: (context) => Home(uid : _userid))
         );
+        setState(() {
+          _message = '';
+        });
       }
       return _userid;
     } catch(e){
-      setState(() {
-        _message = e.toString();
-      });
+      if(e.toString().contains('corresponding')) {
+        setState(() {
+          _message = '존재하지 않는 계정입니다';
+        });
+      } else if(e.toString().contains('password is invalid')){
+        setState(() {
+          _message = '비밀번호를 확인해주세요';
+        });
+      } else {
+        setState(() {
+          _message = e.toString();
+        });
+      }
     }
   }
 }

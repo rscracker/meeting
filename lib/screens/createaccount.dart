@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../util/Authentication.dart';
 import '../model/user.dart';
 
@@ -11,27 +12,37 @@ class CreateAccount extends StatefulWidget {
 }
 
 class _CreateAccountState extends State<CreateAccount> {
+  FirebaseFirestore db = FirebaseFirestore.instance;
   var _userId;
   String message = "";
-  var _email;
-  var _password;
-  var _enabled = false;
+  String confirmMessage = "";
+  String nickCheckMessage = "";
+  bool _enabled = false;
+  bool isNickChecked = false;
+  bool passwordChecked = false;
 
   var nameController  = TextEditingController();
   var nickController  = TextEditingController();
   var emailController  = TextEditingController();
   var passwordController  = TextEditingController();
+  var confirmPasswordController  = TextEditingController();
 
   late Authentication auth;
   @override
   void initState(){
     _enabled = false;
+    isNickChecked = false;
     auth = Authentication();
     nameController.addListener(check);
     nickController.addListener(check);
     emailController.addListener(check);
     passwordController.addListener(check);
+    confirmPasswordController.addListener(check);
 
+    passwordController.addListener(checkPassword);
+    confirmPasswordController.addListener(checkPassword);
+
+    emailController.addListener(messageFormatter);
     super.initState();
   }
   @override
@@ -40,24 +51,45 @@ class _CreateAccountState extends State<CreateAccount> {
     nickController.dispose();
     emailController.dispose();
     passwordController.dispose();
+    confirmPasswordController.dispose();
     super.dispose();
 }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar : AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: (){
+            Navigator.pop(context);
+          },
+        ),
+        title: Text("Sign up",
+          style: GoogleFonts.pacifico(),
+        ),
+      ),
       body: SafeArea(
         child: ListView(
           children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text("Name"),
+            Row(
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text("이름",
+                    style: GoogleFonts.nanumGothic(
+                      fontWeight : FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ],
             ),
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: TextField(
                 controller: nameController,
                 decoration: InputDecoration(
-                  hintText: 'Name',
+                  hintText: '이름',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.all(Radius.circular(10.0)),
                   ),
@@ -66,30 +98,80 @@ class _CreateAccountState extends State<CreateAccount> {
             ),
             Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Text("Nickname"),
+              child: Text("닉네임",
+                style: GoogleFonts.nanumGothic(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            Container(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left : 8.0, top : 8.0, bottom : 8.0, right : 10.0),
+                      child: TextField(
+                        enabled: isNickChecked ? false : true,
+                        controller: nickController,
+                        decoration: InputDecoration(
+                          hintText: '닉네임',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(10.0)),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Container(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          primary: Colors.teal[100],
+                        ),
+                        onPressed : (){
+                          checkNickName(nickController.text);
+                        }
+                        ,
+                        child: Text("중복 검사",
+                          style: GoogleFonts.nanumGothic(
+                            color : Colors.black,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                ],
+              ),
             ),
             Padding(
               padding: const EdgeInsets.all(8.0),
-              child: TextField(
-                controller: nickController,
-                decoration: InputDecoration(
-                  hintText: 'Nickname',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(10.0)),
-                  ),
+              child: Text(nickCheckMessage,
+                style: GoogleFonts.nanumGothic(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                  color: isNickChecked ? Colors.green : Colors.red,
                 ),
               ),
             ),
             Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Text("Email(ID)"),
+              child: Text("아이디(이메일)",
+                style: GoogleFonts.nanumGothic(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
             ),
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: TextField(
                 controller: emailController,
                 decoration: InputDecoration(
-                  hintText: 'Email',
+                  hintText: '아이디',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.all(Radius.circular(10.0)),
                   ),
@@ -99,17 +181,55 @@ class _CreateAccountState extends State<CreateAccount> {
             ),
             Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Text("Password"),
+              child: Text("비밀번호",
+                style: GoogleFonts.nanumGothic(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: TextField(
+                obscureText: true,
                 controller: passwordController,
                 decoration: InputDecoration(
-                  hintText: 'Password',
+                  hintText: '비밀번호는 6자리 이상으로 입력해주세요',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.all(Radius.circular(10.0)),
                   ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text("비밀번호 확인",
+                style: GoogleFonts.nanumGothic(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: TextField(
+                obscureText: true,
+                controller: confirmPasswordController,
+                decoration: InputDecoration(
+                  hintText: '비밀번호 확인',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(10.0)),
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text("$confirmMessage",
+                style: GoogleFonts.nanumGothic(
+                  color: passwordChecked ? Colors.green : Colors.red,
+                  fontSize : 12,
+                  fontWeight : FontWeight.bold,
                 ),
               ),
             ),
@@ -121,6 +241,7 @@ class _CreateAccountState extends State<CreateAccount> {
                 ),
               ),
             ),
+
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Container(
@@ -129,7 +250,7 @@ class _CreateAccountState extends State<CreateAccount> {
                     onPressed: _enabled ? submit : null,
                     child: Text("회원가입"),
                     style: ElevatedButton.styleFrom(
-                      primary:  _enabled ? Colors.blue : Colors.grey,
+                      primary:  Colors.teal[100],
                     ),
                 ),
               ),
@@ -149,17 +270,84 @@ class _CreateAccountState extends State<CreateAccount> {
       Navigator.pop(context);
       return result;
     } catch(e) {
-      setState(() {
-        message = e.toString();
-      });
+      if(e.toString().contains('badly formatted')) {
+        setState(() {
+          message = '이메일 형식이 잘못 되었습니다.';
+        });
+      }
     }
   }
 
   check() {
-    if (nameController.text != "" && nickController.text != ""  && emailController.text != ""  && passwordController.text != ""  ) {
+    if (nameController.text != ""
+        && nickController.text != ""
+        && emailController.text != ""
+        && passwordController.text != ""
+        && confirmPasswordController.text != ""
+        && isNickChecked == true
+        && passwordChecked == true
+    ) {
       setState(() {
         _enabled = true;
       });
+    } else {
+      setState(() {
+        _enabled = false;
+      });
     }
+  }
+
+  checkPassword() {
+    if(passwordController.text != ""
+        && confirmPasswordController.text != ""
+          && passwordController.text != confirmPasswordController.text){
+      setState(() {
+        confirmMessage = "비밀번호가 일치하지 않습니다";
+        passwordChecked = false;
+      });
+    }
+    if(passwordController.text != ""
+        && confirmPasswordController.text != ""
+        && passwordController.text == confirmPasswordController.text){
+      setState(() {
+        confirmMessage = "비밀번호가 일치합니다";
+        passwordChecked = true;
+      });
+      check();
+    }
+  }
+
+  checkNickName(String nick) async{
+    var temp;
+    List totalNick = [];
+    await db.collection('Users').get().then((QuerySnapshot snapshot) {
+      snapshot.docs.forEach((DocumentSnapshot doc) {
+        temp = doc.data();
+        totalNick.add(temp['nickname']);
+      });
+    });
+    if(nick == ''){
+      setState(() {
+        isNickChecked = false;
+        nickCheckMessage = "닉네임을 입력해주세요";
+      });
+    } else if(totalNick.contains(nick)) {
+      setState(() {
+        isNickChecked = false;
+        nickCheckMessage = "이미 존재하는 닉네임 입니다";
+      });
+    } else {
+      setState(() {
+        isNickChecked = true;
+        nickCheckMessage = "사용 가능한 닉네임 입니다";
+        check();
+      });
+    }
+  }
+
+  messageFormatter() {
+    setState(() {
+      message = '';
+    });
   }
 }

@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'selectfriends.dart';
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 
 enum Mode{all, part}
 
@@ -22,16 +23,20 @@ class _AddScheduleState extends State<AddSchedule> {
   List scheduleList = [];
   var userdata;
   Mode _mode = Mode.all;
-
+  List sharedList = [];
+  var dateMaskFormatter = new MaskTextInputFormatter(mask: '####/##/##', filter: { "#": RegExp(r'[0-9]') });
+  var timeMaskFormatter = new MaskTextInputFormatter(mask: '##:##', filter: { "#": RegExp(r'[0-9]') });
   FirebaseFirestore db = FirebaseFirestore.instance;
   var selectedValue;
-  var titleController = TextEditingController();
-  var descriptionController = TextEditingController();
+  var locationController = TextEditingController();
+  var todoController = TextEditingController();
   var dateController = TextEditingController();
   var timeController = TextEditingController();
+  var limitController = TextEditingController();
+
   check () {
-    if(titleController.text != ""
-      && descriptionController.text != ""
+    if(locationController.text != ""
+      && todoController.text != ""
       && dateController.text != ""
       && timeController.text != ""
     ) {
@@ -41,9 +46,24 @@ class _AddScheduleState extends State<AddSchedule> {
     }
   }
   Future submit() async{
+    if(limitController.text == "") {
+      setState(() {
+        limitController.text = "0";
+      });
+    }
     FirebaseFirestore db = FirebaseFirestore.instance;
     var temp = scheduleList;
-    Schedule schedule = Schedule(titleController.text, descriptionController.text, dateController.text, timeController.text, [], widget.uid);
+    Schedule schedule = Schedule(
+        DateTime.now().toString(),
+        locationController.text,
+        todoController.text,
+        dateController.text,
+        timeController.text,
+        (sharedList.length == 0) ? [] : sharedList,
+        widget.uid,
+        limitController.text,
+        [],
+    );
     temp.add(schedule.toMap());
     print(temp);
     var result = await db.collection('Users').doc(widget.uid).update({"scheduleList": FieldValue.arrayUnion(temp)});
@@ -56,10 +76,18 @@ class _AddScheduleState extends State<AddSchedule> {
     });
     return temp;
   }
+
+  _navigatePage(BuildContext context) async{
+    sharedList = await Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => SelectFriends(uid: widget.uid)));
+  }
+
   @override
   void initState() {
-    titleController.addListener(check);
-    descriptionController.addListener(check);
+    locationController.addListener(check);
+    todoController.addListener(check);
     dateController.addListener(check);
     timeController.addListener(check);
 
@@ -73,8 +101,11 @@ class _AddScheduleState extends State<AddSchedule> {
   }
   @override
   void dispose(){
-    titleController.dispose();
-    descriptionController.dispose();
+    timeController.dispose();
+    dateController.dispose();
+    limitController.dispose();
+    locationController.dispose();
+    todoController.dispose();
     super.dispose();
   }
   @override
@@ -88,82 +119,113 @@ class _AddScheduleState extends State<AddSchedule> {
         children: <Widget>[
           Padding(
             padding: const EdgeInsets.all(8.0),
-            child: Text("Title",
+            child: Text("장소",
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.bold,
             )
               ,),
           ),
-          TextField(
-            controller: titleController,
-            decoration: InputDecoration(
-              hintText: 'Title',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.all(Radius.circular(10.0)),
-              ),
-          ),
+          Padding(
+            padding: const EdgeInsets.only(left : 8.0, right : 8.0),
+            child: TextField(
+              controller: locationController,
+              decoration: InputDecoration(
+                hintText: '장소',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(10.0)),
+                ),
+            ),
+            ),
           ),
           Padding(
             padding: const EdgeInsets.all(8.0),
-            child: Text("Date",
+            child: Text("날짜",
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.bold,
               )
               ,),
           ),
-          TextField(
-            controller: dateController,
-            decoration: InputDecoration(
-              hintText: 'Date',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.all(Radius.circular(10.0)),
+          Padding(
+            padding: const EdgeInsets.only(left : 8.0, right : 8.0),
+            child: TextField(
+              inputFormatters: [dateMaskFormatter],
+              controller: dateController,
+              decoration: InputDecoration(
+                hintText: 'ex) 2021/01/03',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(10.0)),
+                ),
               ),
             ),
           ),
           Padding(
             padding: const EdgeInsets.all(8.0),
-            child: Text("Time",
+            child: Text("시간",
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.bold,
               )
               ,),
           ),
-          TextField(
-            controller: timeController,
-            decoration: InputDecoration(
-              hintText: 'Time',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.all(Radius.circular(10.0)),
+          Padding(
+            padding: const EdgeInsets.only(left : 8.0, right : 8.0),
+            child: TextField(
+              inputFormatters: [timeMaskFormatter],
+              controller: timeController,
+              decoration: InputDecoration(
+                hintText: 'ex) 13:00',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(10.0)),
+                ),
               ),
             ),
           ),
           Padding(
             padding: const EdgeInsets.all(8.0),
-            child: Text("Description",
+            child: Text("할 것",
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.bold,
             ),),
           ),
-          TextField(
-            controller : descriptionController,
-            keyboardType: TextInputType.multiline,
-            maxLines: 10,
-            decoration: InputDecoration(
-              hintText: 'Description',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.all(Radius.circular(10.0)),
+          Padding(
+            padding: const EdgeInsets.only(left : 8.0, right : 8.0),
+            child: TextField(
+              controller : todoController,
+              decoration: InputDecoration(
+                hintText: '할 것',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(10.0)),
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text("인원 제한 (공백이면 제한 없음)",
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+              ),),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left : 8.0, right : 8.0),
+            child: TextField(
+              controller : limitController,
+              decoration: InputDecoration(
+                hintText: '인원 제한',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(10.0)),
+                ),
               ),
             ),
           ),
           Column(
             children: <Widget>[
-              ListTile(
+              RadioListTile(
                 title : Text("전체 공개"),
-                leading: Radio(
                   value : Mode.all,
                   groupValue: _mode,
                   onChanged: (value) {
@@ -171,28 +233,29 @@ class _AddScheduleState extends State<AddSchedule> {
                       _mode = value as dynamic;
                     });
                 },
-                ),
               ),
-              ListTile(
+              RadioListTile(
                 title : Text("일부 공개"),
-                leading: Radio(
                   value : Mode.part,
                   groupValue: _mode,
                   onChanged: (value) {
                     setState(() {
                       _mode = value as dynamic;
                     });
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (context) => SelectFriends())
-                    );
+                    _navigatePage(context);
                   },
                 ),
-              ),
               Container(
                 alignment: Alignment.center,
                 child: ElevatedButton(
-                    onPressed: isValid ? submit : null,
-                    child: Text("Enter")),
+                    style: ElevatedButton.styleFrom(
+                      primary: Colors.teal[100],
+                    ),
+                    onPressed: isValid ? (){
+                      submit();
+                      Navigator.pop(context);
+                    } : null,
+                    child: Text("확인")),
               ),
 
             ],
