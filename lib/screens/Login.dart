@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'home.dart';
 import 'createaccount.dart';
 import '../util/Authentication.dart';
@@ -16,6 +17,7 @@ class Login extends StatefulWidget {
 }
 
 class _LoginState extends State<Login> {
+  var isChecked = false;
   var _userid;
   var _message;
   var _enabled = false;
@@ -32,6 +34,7 @@ class _LoginState extends State<Login> {
     idController.addListener(check);
     pwController.addListener(check);
     super.initState();
+    autoLogin();
   }
   @override
   void dispose(){
@@ -67,6 +70,7 @@ class _LoginState extends State<Login> {
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: TextField(
+                obscureText: true,
                 controller: pwController,
                 decoration: InputDecoration(
                   hintText: 'Password',
@@ -76,8 +80,21 @@ class _LoginState extends State<Login> {
                 ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.only(left: 16.0, top : 8.0, bottom : 8.0),
+            Row(
+              children: <Widget>[
+                Checkbox(
+                  value : isChecked,
+                  onChanged: (value){
+                    setState(() {
+                      isChecked = value!;
+                    });
+                  },
+                ),
+                Text("자동 로그인")
+              ],
+            ),
+            (_message != '') ? Padding(
+              padding: const EdgeInsets.only(left: 16.0, bottom : 8.0),
               child: Container(
                 alignment: Alignment.centerLeft,
                 child: Text("$_message",
@@ -87,7 +104,7 @@ class _LoginState extends State<Login> {
                   ),
                 ),
               ),
-            ),
+            ) : Container(),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
@@ -96,7 +113,9 @@ class _LoginState extends State<Login> {
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                     primary: Colors.blue[100],
-                  ),onPressed: _enabled ? submit : null,
+                  ),onPressed: _enabled ? (){
+                      submit(idController.text, pwController.text);
+                  } : null,
                       child: Text("로그인",
                         style: GoogleFonts.nanumGothic(
                           color: Colors.black,
@@ -134,6 +153,19 @@ class _LoginState extends State<Login> {
     );
   }
 
+  void autoLogin() async{
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String id = prefs.getString('id') ?? '';
+    String password = prefs.getString('password') ?? '';
+    var autoLogin = prefs.getBool('autoLogin');
+    setState(() {
+      isChecked = autoLogin!;
+    });
+    if(id != '' && password != ''){
+      submit(id, password);
+    }
+  }
+
   void check() {
     if (idController.text != "" && pwController.text != "") {
       setState(() {
@@ -142,17 +174,29 @@ class _LoginState extends State<Login> {
     }
   }
 
-  Future submit() async{
+  Future submit(String id, String password) async{
+    SharedPreferences prefs = await SharedPreferences.getInstance();
     FirebaseFirestore db = FirebaseFirestore.instance;
     try {
-      _userid = await auth!.login(idController.text, pwController.text);
+      _userid = await auth!.login(
+          id,
+          password);
       if (_userid != null) {
-        Navigator.of(context).push(
+        Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => Home(uid : _userid))
         );
         setState(() {
           _message = '';
         });
+        if(isChecked){
+          await prefs.setString('id', id);
+          await prefs.setString('password', password);
+          await prefs.setBool('autoLogin', true);
+        } else {
+          await prefs.setString('id', '');
+          await prefs.setString('password', '');
+          await prefs.setBool('autoLogin', false);
+        }
       }
       return _userid;
     } catch(e){
@@ -164,7 +208,11 @@ class _LoginState extends State<Login> {
         setState(() {
           _message = '비밀번호를 확인해주세요';
         });
-      } else {
+      } else if(e.toString().contains('badly formatted')){
+        setState(() {
+          _message = '아이디 형식을 확인해 주세요 (이메일 형식)';
+        });
+      }else {
         setState(() {
           _message = e.toString();
         });
