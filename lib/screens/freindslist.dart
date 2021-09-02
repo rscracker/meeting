@@ -397,7 +397,7 @@ class _FriendsListState extends State<FriendsList> {
                       builder: (context) => FriendsRequest(uid: widget.uid)));
                 },
                 icon: Icon(
-                  Icons.announcement_rounded,
+                  Icons.person_add,
                 ),
               ),
             ],

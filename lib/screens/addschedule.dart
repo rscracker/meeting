@@ -34,11 +34,23 @@ class _AddScheduleState extends State<AddSchedule> {
   var timeController = TextEditingController();
   var limitController = TextEditingController();
 
+  bool isDateChecked = false;
+  bool isTimeChecked = false;
+  checkDate() {
+
+  }
+
+  checkTime() {
+
+  }
+
   check () {
     if(locationController.text != ""
       && todoController.text != ""
       && dateController.text != ""
       && timeController.text != ""
+      && dateController.text.length == 10
+      && timeController.text.length == 5
     ) {
       setState(() {
         isValid = true;
@@ -150,6 +162,7 @@ class _AddScheduleState extends State<AddSchedule> {
           Padding(
             padding: const EdgeInsets.only(left : 8.0, right : 8.0),
             child: TextField(
+              keyboardType: TextInputType.number,
               inputFormatters: [dateMaskFormatter],
               controller: dateController,
               decoration: InputDecoration(
@@ -172,6 +185,7 @@ class _AddScheduleState extends State<AddSchedule> {
           Padding(
             padding: const EdgeInsets.only(left : 8.0, right : 8.0),
             child: TextField(
+              keyboardType: TextInputType.number,
               inputFormatters: [timeMaskFormatter],
               controller: timeController,
               decoration: InputDecoration(

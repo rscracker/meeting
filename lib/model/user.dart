@@ -1,6 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'schedule.dart';
-
 class Users {
   var _id;
   var _userid;

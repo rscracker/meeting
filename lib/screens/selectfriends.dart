@@ -18,11 +18,17 @@ class _SelectFriendsState extends State<SelectFriends> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        child: Text("완료"),
-        onPressed: (){
-          Navigator.pop(context,sharedList);
-        },
+      appBar: AppBar(
+        title: Text("친구 선택"),
+        actions: [
+          TextButton(
+            onPressed: (){
+              Navigator.pop(context,sharedList);
+            },
+            child: Text("완료",
+            ),
+          )
+        ],
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: db.collection('Users').snapshots(),
@@ -63,7 +69,20 @@ class _SelectFriendsState extends State<SelectFriends> {
                       ),
                     ),
                     trailing: ElevatedButton(
-                      child: (sharedList.contains(_friendsList[index])) ? Text("삭제") : Text("추가"),
+                      style: ElevatedButton.styleFrom(
+                        primary: Colors.lightBlueAccent[100]
+                      ),
+                      child: (sharedList.contains(_friendsList[index])) ?
+                      Text("삭제",
+                        style: TextStyle(
+                          color : Colors.black
+                        ),
+                      ) :
+                      Text("추가",
+                        style: TextStyle(
+                            color : Colors.black
+                        ),
+                      ),
                       onPressed: (){
                         if(sharedList.contains(_friendsList[index])){
                           sharedList.remove(_friendsList[index]);
