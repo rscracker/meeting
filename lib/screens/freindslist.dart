@@ -16,6 +16,7 @@ class _FriendsListState extends State<FriendsList> {
   bool isSearch = false;
   bool isFriends = false;
   bool isMyAccount = false;
+  bool isRequesting = false;
   var searchedUser;
   var searchController = TextEditingController();
   final FirebaseFirestore db = FirebaseFirestore.instance;
@@ -82,6 +83,24 @@ class _FriendsListState extends State<FriendsList> {
     });
   }
 
+  checkRequesting(String uid) async {
+    List _friendsRequest = [];
+    var temp;
+    var result = await db.collection('Users').doc(uid).get().then((doc) {
+      temp = doc.data();
+      _friendsRequest = temp['friendsRequest'];
+    });
+    if(_friendsRequest.contains(widget.uid)){
+      setState(() {
+        isRequesting = true;
+      });
+    } else {
+      setState(() {
+        isRequesting = false;
+      });
+    }
+  }
+
   requestFriends(String uid) async {
     List _friendsRequest = [];
     var temp;
@@ -124,6 +143,7 @@ class _FriendsListState extends State<FriendsList> {
           onSubmitted: (value) async {
             await searchUser();
             if (searchedUser != null) {
+              await checkRequesting(searchedUser['userid']);
               showDialog(
                   context: context,
                   builder: (BuildContext context) {
@@ -133,13 +153,39 @@ class _FriendsListState extends State<FriendsList> {
                             borderRadius: BorderRadius.circular(10.0)),
                         title: Column(
                           children: <Widget>[
-                            Text(
-                              '이름 : ' + searchedUser['name'],
-                              style: GoogleFonts.nanumGothic(),
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    '이름 : ',
+                                    style: GoogleFonts.nanumGothic(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Text(
+                                    searchedUser['name'],
+                                    style: GoogleFonts.nanumGothic(),
+                                  ),
+                                ],
+                              ),
                             ),
-                            Text(
-                              '닉네임 : ' + searchedUser['nickname'],
-                              style: GoogleFonts.nanumGothic(),
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    '닉네임 : ',
+                                    style: GoogleFonts.nanumGothic(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Text(
+                                    searchedUser['name'],
+                                    style: GoogleFonts.nanumGothic(),
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
                         ),
@@ -149,7 +195,9 @@ class _FriendsListState extends State<FriendsList> {
                             Padding(
                               padding: const EdgeInsets.all(8.0),
                               child: isMyAccount ? Text('') : !isFriends
-                                  ? ElevatedButton(
+                                  ? isRequesting ?
+                              Text('친구 요청중입니다') :
+                              ElevatedButton(
                                       style: ElevatedButton.styleFrom(
                                         primary: Colors.teal[100],
                                       ),
@@ -203,7 +251,15 @@ class _FriendsListState extends State<FriendsList> {
                                             color: Colors.black,
                                             fontWeight: FontWeight.bold,
                                           ))
-                                      : Text(
+                                      : isRequesting ?
+                                  Text(
+                                    "확인",
+                                    style: GoogleFonts.nanumGothic(
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ) :
+                                        Text(
                                           "취소",
                                           style: GoogleFonts.nanumGothic(
                                             color: Colors.black,
@@ -260,6 +316,7 @@ class _FriendsListState extends State<FriendsList> {
                     await searchUser();
                     //&& searchedUser['userid'] != widget.uid
                     if (searchedUser != null) {
+                      await checkRequesting(searchedUser['userid']);
                       showDialog(
                           context: context,
                           builder: (BuildContext context) {
@@ -269,16 +326,40 @@ class _FriendsListState extends State<FriendsList> {
                                     borderRadius: BorderRadius.circular(10.0)),
                                 title: Column(
                                   children: <Widget>[
-                                    Text(
-                                      '이름 : ' + searchedUser['name'],
-                                      style: GoogleFonts.nanumGothic(
-                                        fontWeight : FontWeight.bold,
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Row(
+                                        children: <Widget>[
+                                          Text(
+                                            '이름 : ',
+                                            style: GoogleFonts.nanumGothic(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          Text(
+                                            searchedUser['name'],
+                                            style: GoogleFonts.nanumGothic(
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                    Text(
-                                      '닉네임 : ' + searchedUser['nickname'],
-                                      style: GoogleFonts.nanumGothic(
-                                        fontWeight : FontWeight.bold,
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Row(
+                                        children: [
+                                          Text(
+                                            '닉네임 : ',
+                                            style: GoogleFonts.nanumGothic(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          Text(
+                                            searchedUser['nickname'],
+                                            style: GoogleFonts.nanumGothic(
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ],
@@ -289,7 +370,8 @@ class _FriendsListState extends State<FriendsList> {
                                     Padding(
                                       padding: const EdgeInsets.all(8.0),
                                       child: isMyAccount ? null : !isFriends
-                                          ? ElevatedButton(
+                                          ? isRequesting ? Text("친구 요청중입니다") :
+                                      ElevatedButton(
                                               style: ElevatedButton.styleFrom(
                                                 primary: Colors.teal[100],
                                               ),
@@ -345,7 +427,15 @@ class _FriendsListState extends State<FriendsList> {
                                                     color: Colors.black,
                                                     fontWeight: FontWeight.bold,
                                                   ))
-                                              : Text(
+                                              : isRequesting ?
+                                          Text(
+                                            "확인",
+                                            style: GoogleFonts.nanumGothic(
+                                              color: Colors.black,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ) :
+                                          Text(
                                                   "취소",
                                                   style:
                                                       GoogleFonts.nanumGothic(
@@ -373,6 +463,9 @@ class _FriendsListState extends State<FriendsList> {
                                 ),
                               ),
                               content: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  primary : Colors.teal[100]
+                                ),
                                 onPressed: () {
                                   Navigator.pop(context);
                                 },
@@ -380,6 +473,7 @@ class _FriendsListState extends State<FriendsList> {
                                   "확인",
                                   style: GoogleFonts.nanumGothic(
                                     fontWeight: FontWeight.bold,
+                                    color : Colors.black,
                                   ),
                                 ),
                               ),

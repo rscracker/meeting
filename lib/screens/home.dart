@@ -30,7 +30,7 @@ class _HomeState extends State<Home> {
   var scheduleList;
   List friendsScheduleList = [];
   List totalScheduleList = [];
-
+  List totalParticipationList = [];
   //Color
   var wrongColor = Colors.red;
   var correctColor = Colors.green;
@@ -39,6 +39,8 @@ class _HomeState extends State<Home> {
   bool isNickChecked = false;
   var isEditing;
   String nickCheckMessage = '';
+
+  final StreamController<List> streamController = StreamController<List>.broadcast();
   @override
   void initState(){
     isEditing = false;
@@ -53,7 +55,11 @@ class _HomeState extends State<Home> {
       });
     super.initState();
   }
-
+  @override
+  void dispose(){
+    super.dispose();
+    streamController.close();
+  }
   getUsers() async{
     var temp;
     List friends = [];
@@ -187,6 +193,9 @@ class _HomeState extends State<Home> {
     a['time'].substring(0,1).compareTo(b['time'].substring(0,1)) :
     a['time'].substring(3,4).compareTo(b['time'].substring(3,4))
     );
+
+    streamController.sink.add(_totalParticipation);
+
     deleteSchedule(String docNum) async{
       _scheduleList.removeWhere((schedule) => schedule['docNum'] == docNum);
       await db.collection('Users').doc(widget.uid).update({"scheduleList" : _scheduleList});
@@ -282,57 +291,57 @@ class _HomeState extends State<Home> {
                                           ),
                                           height : 400,
                                           width : 300,
-                                          child: ListView.builder(
-                                              shrinkWrap: true,
-                                              scrollDirection: Axis.vertical,
-                                              itemCount : (_totalParticipation.length != 0) ? _totalParticipation.length : 0,
-                                              itemBuilder: (BuildContext context, int index) {
-                                                return ListTile(
-                                                    title: Text(_totalParticipation[index]['todo'],
-                                                        style : GoogleFonts.nanumGothic(
-                                                          fontWeight: FontWeight.bold,
-                                                        )
-                                                    ),
-                                                    subtitle: Column(
-                                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                                      children: <Widget>[
-                                                        Padding(
-                                                          padding: const EdgeInsets.all(1.0),
-                                                          child: Text(_totalParticipation[index]['location']),
+                                          child: StreamBuilder<List>(
+                                            stream: streamController.stream,
+                                            builder: (BuildContext context, AsyncSnapshot snapshot) {
+                                              List total = snapshot.hasData ? snapshot.data : _totalParticipation;
+                                              return ListView.builder(
+                                                  shrinkWrap: true,
+                                                  scrollDirection: Axis.vertical,
+                                                  itemCount : (total.length != 0) ? total.length : 0,
+                                                  itemBuilder: (BuildContext context, int index) {
+                                                    return ListTile(
+                                                        title: Text(total[index]['todo'],
+                                                            style : GoogleFonts.nanumGothic(
+                                                              fontWeight: FontWeight.bold,
+                                                            )
                                                         ),
-                                                        Padding(
-                                                          padding: const EdgeInsets.all(1.0),
-                                                          child: Text(_totalParticipation[index]['date'] + ' ' + _totalParticipation[index]['time']),
+                                                        subtitle: Column(
+                                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                                          children: <Widget>[
+                                                            Padding(
+                                                              padding: const EdgeInsets.all(1.0),
+                                                              child: Text(total[index]['location']),
+                                                            ),
+                                                            Padding(
+                                                              padding: const EdgeInsets.all(1.0),
+                                                              child: Text(total[index]['date'] + ' ' + total[index]['time']),
+                                                            ),
+                                                          ],
                                                         ),
-                                                      ],
-                                                    ),
-                                                    trailing: (_totalParticipation[index]['uploader'] == widget.uid) ?
-                                                    IconButton(
-                                                        onPressed: (){
-                                                          deleteSchedule(_totalParticipation[index]['docNum']);
-                                                          setState(() {
-                                                            _totalParticipation = _totalParticipation;
-                                                          });
-                                                        },
-                                                        icon : Icon(
-                                                          Icons.delete,
-                                                          color: Colors.red,
+                                                        trailing: (total[index]['uploader'] == widget.uid) ?
+                                                        IconButton(
+                                                            onPressed: (){
+                                                              deleteSchedule(total[index]['docNum']);
+                                                            },
+                                                            icon : Icon(
+                                                              Icons.delete,
+                                                              color: Colors.red,
+                                                            )
+                                                        ) :
+                                                        IconButton(
+                                                            onPressed: (){
+                                                              cancelParticipation(total[index]['uploader'], total[index]['docNum']);
+                                                            },
+                                                            icon : Icon(
+                                                              Icons.cancel,
+                                                              color: Colors.red,
+                                                            )
                                                         )
-                                                    ) :
-                                                    IconButton(
-                                                        onPressed: (){
-                                                          cancelParticipation(_totalParticipation[index]['uploader'], _totalParticipation[index]['docNum']);
-                                                          setState(() {
-                                                            _totalParticipation = _totalParticipation;
-                                                          });
-                                                        },
-                                                        icon : Icon(
-                                                          Icons.cancel,
-                                                          color: Colors.red,
-                                                        )
-                                                    )
-                                                );
-                                              }),
+                                                    );
+                                                  });
+                                            }
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -844,6 +853,7 @@ class _HomeState extends State<Home> {
                       child: Row(
                         children: <Widget>[
                           Icon(Icons.location_pin,
+                            color: Colors.red[400],
                           ),
                           Padding(
                             padding: const EdgeInsets.only(left : 8.0),
@@ -863,7 +873,9 @@ class _HomeState extends State<Home> {
                       padding: const EdgeInsets.only(top :8.0, bottom : 8.0),
                       child: Row(
                         children: <Widget>[
-                          Icon(Icons.calendar_today_outlined),
+                          Icon(Icons.calendar_today_outlined,
+                            color: Colors.black,
+                          ),
                           Padding(
                             padding: const EdgeInsets.only(left : 8.0),
                             child: Text(
@@ -881,7 +893,9 @@ class _HomeState extends State<Home> {
                       padding: const EdgeInsets.only( top : 8.0, bottom : 8.0),
                       child: Row(
                         children: <Widget>[
-                          Icon(Icons.supervisor_account_sharp),
+                          Icon(Icons.supervisor_account_sharp,
+                            color: Colors.blue,
+                          ),
                           Padding(
                             padding: const EdgeInsets.only(left : 8.0),
                             child: Text(

@@ -210,6 +210,10 @@ class _LoginState extends State<Login> {
         setState(() {
           _message = '아이디 형식을 확인해 주세요 (이메일 형식)';
         });
+      } else if(e.toString().contains('connection')){
+        setState(() {
+          _message = '인터넷 연결 상태를 확인해주세요';
+        });
       }else {
         setState(() {
           _message = e.toString();
